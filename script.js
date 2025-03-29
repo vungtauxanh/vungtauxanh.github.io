@@ -463,31 +463,24 @@ function showResult(prize) {
     playWinSound();
 }
 
-async function shareResult(prize) {
+function shareResult(prize) {
     try {
         // Nội dung chia sẻ (chỉ văn bản)
         const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${playerInfo.name} đã trúng ${prize.name}!`;
         console.log('Nội dung chia sẻ:', shareText);
 
-        // Sử dụng Web Share API để chia sẻ văn bản
-        if (navigator.share) {
-            await navigator.share({
-                text: shareText
-            });
-            showNotification('Đã chia sẻ thành công lên mạng xã hội!');
-        } else {
-            // Fallback: Mở WhatsApp với nội dung chia sẻ nếu không hỗ trợ Web Share API
-            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-            window.open(whatsappUrl, '_blank');
-            showNotification('Trình duyệt không hỗ trợ chia sẻ trực tiếp. Đã mở WhatsApp để bạn chia sẻ!');
-        }
+        // URL của trang web để chia sẻ
+        const shareUrl = 'https://vungtauxanh.github.io/';
+
+        // Tạo URL chia sẻ cho Facebook
+        const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+
+        // Mở URL trong tab mới
+        window.open(facebookShareUrl, '_blank');
+        showNotification('Đã mở Facebook để bạn chia sẻ!');
     } catch (error) {
-        console.error('Error sharing result:', error);
-        // Fallback: Mở WhatsApp nếu chia sẻ thất bại
-        const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${playerInfo.name} đã trúng ${prize.name}!`;
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-        window.open(whatsappUrl, '_blank');
-        showNotification('Không thể chia sẻ trực tiếp. Đã mở WhatsApp để bạn chia sẻ!');
+        console.error('Error sharing to Facebook:', error);
+        showNotification('Không thể mở Facebook. Vui lòng thử lại!');
     }
 }
 
