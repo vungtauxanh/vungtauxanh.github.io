@@ -7,7 +7,6 @@ let winAudio;
 let playerInfo = null;
 let programName = '';
 
-// Preload âm thanh
 function preloadAudio() {
     spinAudio = new Audio('sounds/spin.mp3');
     spinAudio.volume = 0.5;
@@ -20,7 +19,6 @@ function preloadAudio() {
     console.log('Preloading audio files...');
 }
 
-// Tạo hiệu ứng particles nền
 function createParticles() {
     const particlesContainer = document.getElementById('particles');
     const particleCount = window.innerWidth < 768 ? 30 : 50;
@@ -71,7 +69,8 @@ async function fetchData() {
             color: row[4],
             logo: row[5],
             background: row[6],
-            companyLogo: row[7]
+            companyLogo: row[7],
+            hashtag: row[8] // Hashtag từ cột I
         }));
 
         console.log('Dữ liệu từ Google Sheet:', prizes);
@@ -88,13 +87,12 @@ async function fetchData() {
 
 function updateUI() {
     const programTitle = document.getElementById('program-title');
-    programTitle.innerHTML = ''; // Xóa nội dung cũ
+    programTitle.innerHTML = '';
     
     const programContent = prizes[0].program;
     const isImage = programContent.startsWith('http') && (programContent.endsWith('.png') || programContent.endsWith('.jpg') || programContent.endsWith('.jpeg') || programContent.endsWith('.gif'));
 
     if (isImage) {
-        // Hiển thị banner ảnh
         const img = document.createElement('img');
         img.src = programContent;
         img.alt = 'Banner chương trình';
@@ -107,7 +105,6 @@ function updateUI() {
         };
         programTitle.appendChild(img);
     } else {
-        // Hiển thị text
         programTitle.textContent = programContent;
         programTitle.style.color = prizes[0].color;
         if (prizes[0].color) {
@@ -313,7 +310,7 @@ function playSpinSound() {
         console.log('Spin sound started');
     }).catch(err => {
         console.error('Spin audio error:', err);
-        showNotification('Không thể phát âm thanh vòng quay!');
+        showNotification('Không thể phát âm thanh vòng quay! Vui lòng kiểm tra chế độ âm thanh trên thiết bị.');
     });
 }
 
@@ -335,7 +332,6 @@ function playWinSound() {
     console.log('Attempting to play clap sound');
     winAudio.play().then(() => {
         console.log('Clap sound started');
-        // Dừng sau 5 giây
         setTimeout(() => {
             winAudio.pause();
             winAudio.currentTime = 0;
@@ -343,7 +339,7 @@ function playWinSound() {
         }, 5000);
     }).catch(err => {
         console.error('Clap audio error:', err);
-        showNotification('Không thể phát tiếng vỗ tay!');
+        showNotification('Không thể phát tiếng vỗ tay! Vui lòng kiểm tra chế độ âm thanh trên thiết bị hoặc cho phép âm thanh trong trình duyệt.');
     });
 }
 
@@ -443,19 +439,11 @@ function showResult(prize) {
     const resultImage = document.getElementById('result-image');
     const shareBtn = document.getElementById('share-btn');
     
-    // Hiển thị thông điệp cá nhân hóa
     let message = `Chúc mừng ${playerInfo.name}! Bạn trúng: ${prize.name}`;
-    
-    // Thêm hashtag nếu chương trình là text
-    const isImage = programName.startsWith('http') && (programName.endsWith('.png') || programName.endsWith('.jpg') || programName.endsWith('.jpeg') || programName.endsWith('.gif'));
-    if (!isImage) {
-        const hashtag = `#${programName.replace(/\s+/g, '')}`;
-        message += ` ${hashtag}`;
-    }
-    
-    resultText.textContent = message;
-    resultText.style.color = prize.color || '#2E7D32';
-    resultText.style.fontWeight = 'bold';
+    resultText.innerHTML = `
+        <p style="font-size: 1.4em; font-weight: bold; color: ${prize.color || '#2E7D32'}">${message}</p>
+        <p style="font-size: 1.2em; color: ${prize.color || '#2E7D32'}; margin-top: 10px;">${prize.hashtag}</p>
+    `;
     
     if (prize.image) {
         resultImage.src = prize.image;
@@ -469,33 +457,30 @@ function showResult(prize) {
     resultText.offsetHeight;
     resultText.style.animation = 'pulse 0.5s ease 3';
 
-    // Hiển thị nút chia sẻ
     shareBtn.style.display = 'block';
-    shareBtn.onclick = () => shareResult();
+    shareBtn.onclick = () => shareResult(prize);
 
-    playWinSound(); // Phát âm thanh vỗ tay
+    playWinSound();
 }
 
-async function shareResult() {
-    const resultSection = document.getElementById('result');
+function shareResult(prize) {
     try {
-        const canvas = await html2canvas(resultSection, {
-            backgroundColor: '#ffffff',
-            scale: 2
-        });
-        const imgData = canvas.toDataURL('image/png');
-        
-        // Tạo link tải ảnh
-        const downloadLink = document.createElement('a');
-        downloadLink.href = imgData;
-        downloadLink.download = 'ket-qua-vong-quay.png';
-        downloadLink.click();
-        
-        // Hiển thị thông báo hướng dẫn chia sẻ
-        showNotification('Ảnh kết quả đã được tải xuống. Bạn có thể đăng lên Facebook hoặc X để chia sẻ!');
+        // Nội dung chia sẻ (chỉ văn bản)
+        const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${playerInfo.name} đã trúng ${prize.name}!`;
+        console.log('Nội dung chia sẻ:', shareText);
+
+        // URL của trang web để chia sẻ
+        const shareUrl = 'https://vungtauxanh.github.io/';
+
+        // Tạo URL chia sẻ cho Facebook với tham số quote chính xác
+        const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+
+        // Mở URL trong tab mới
+        window.open(facebookShareUrl, '_blank');
+        showNotification('Đã mở Facebook để bạn chia sẻ!');
     } catch (error) {
-        console.error('Error generating share image:', error);
-        showNotification('Không thể tạo ảnh chia sẻ. Vui lòng thử lại!');
+        console.error('Error sharing to Facebook:', error);
+        showNotification('Không thể mở Facebook. Vui lòng thử lại!');
     }
 }
 
@@ -506,7 +491,6 @@ async function updateQuantity(winner) {
     try {
         const updateUrl = 'https://script.google.com/macros/s/AKfycbx2Qfwi8MLcDMAlVmSvl-9E3UsmIoym2UePTd9NRj5Hco8OXLNCgzUDBVXk-fvKHCtd/exec';
         
-        // Cập nhật số lượng giải thưởng (Sheet 1)
         await fetch(updateUrl, {
             method: 'POST',
             mode: 'no-cors',
@@ -519,7 +503,6 @@ async function updateQuantity(winner) {
             })
         });
 
-        // Ghi thông tin người chơi và giải thưởng vào Sheet 2
         await fetch(updateUrl, {
             method: 'POST',
             mode: 'no-cors',
@@ -611,7 +594,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === this) closeModal();
     });
 
-    // Xử lý form thông tin người chơi
     const playerInfoForm = document.getElementById('player-info-form');
     playerInfoForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -626,7 +608,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('spin-btn').disabled = false;
     });
 
-    // Hiển thị modal thông tin người chơi khi trang tải
     showPlayerInfoModal();
     
     fetchData();
