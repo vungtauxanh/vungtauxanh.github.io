@@ -10,7 +10,6 @@
     <meta name="description" content="Chương trình vòng quay trúng thưởng với nhiều phần quà hấp dẫn">
 </head>
 <body style="opacity: 0; transition: opacity 0.5s ease;">
-    <!-- Floating particles background -->
     <div class="particles" id="particles"></div>
     
     <div class="container">
@@ -49,7 +48,6 @@
         </footer>
     </div>
 
-    <!-- Modal thông báo -->
     <div id="notification-modal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">×</span>
@@ -59,12 +57,22 @@
         </div>
     </div>
 
-    <!-- Modal nhập thông tin người chơi -->
     <div id="player-info-modal" class="modal">
         <div class="modal-content">
             <h3><i class="fas fa-user"></i> Thông tin người chơi</h3>
             <form id="player-info-form">
+               <div class="form-group">
+                    <label for="player-follow-fb">Theo dõi trang Facebook <span class="required">*</span></label>
+                    <input type="checkbox" id="player-follow-fb" required>
+                    <a id="fb-page-link" href="#" target="_blank">Click để theo dõi</a>
+                </div>
                 <div class="form-group">
+                    <label for="player-like-post">Thích bài viết <span class="required">*</span></label>
+                    <input type="checkbox" id="player-like-post" required>
+                    <a id="fb-post-link" href="#" target="_blank">Click để thích</a>
+                </div>
+
+			   <div class="form-group">
                     <label for="player-name">Họ và tên <span class="required">*</span></label>
                     <input type="text" id="player-name" required placeholder="Nhập họ và tên">
                 </div>
@@ -84,6 +92,7 @@
                     <label for="player-zalo">Zalo</label>
                     <input type="text" id="player-zalo" placeholder="Nhập số Zalo (nếu có)">
                 </div>
+                
                 <button type="submit" class="modal-btn">Xác nhận</button>
             </form>
         </div>

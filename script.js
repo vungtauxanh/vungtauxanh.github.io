@@ -46,7 +46,7 @@ function createParticles() {
 }
 
 async function fetchData() {
-    const sheetUrl = 'https://script.google.com/macros/s/AKfycbx2Qfwi8MLcDMAlVmSvl-9E3UsmIoym2UePTd9NRj5Hco8OXLNCgzUDBVXk-fvKHCtd/exec';
+    const sheetUrl = 'https://script.google.com/macros/s/AKfycbx-RjmDQM3hUuPfc79PokYcR-QYh99H-PWzicdpRPmtgN6Dk_ekxN3zkHjpL2CXaBAg/exec';
     try {
         showLoading();
         const response = await fetch(sheetUrl, {
@@ -70,7 +70,9 @@ async function fetchData() {
             logo: row[5],
             background: row[6],
             companyLogo: row[7],
-            hashtag: row[8] // Hashtag từ cột I
+            hashtag: row[8],
+            fbPage: row[9], // Cột J: Link trang FB
+            fbPost: row[10] // Cột K: Link bài viết
         }));
 
         console.log('Dữ liệu từ Google Sheet:', prizes);
@@ -356,6 +358,14 @@ function showSpinning() {
 
 function spinWheel() {
     if (isSpinning) return;
+
+    // Kiểm tra xem người chơi đã quay chưa
+    const playedPlayers = JSON.parse(localStorage.getItem('playedPlayers') || '[]');
+    if (playedPlayers.includes(playerInfo.phone)) {
+        showNotification('Bạn đã tham gia quay rồi! Mỗi người chỉ được quay 1 lần.');
+        return;
+    }
+
     isSpinning = true;
     
     stopBlinkEffect();
@@ -368,11 +378,24 @@ function spinWheel() {
         return;
     }
 
+    // Tính tổng số lượng để xác định trọng số
+    const totalQuantity = availablePrizes.reduce((sum, prize) => sum + prize.quantity, 0);
+    
+    // Chọn giải thưởng dựa trên trọng số
+    let randomWeight = Math.random() * totalQuantity;
+    let winnerIndex = 0;
+    for (let i = 0; i < availablePrizes.length; i++) {
+        randomWeight -= availablePrizes[i].quantity;
+        if (randomWeight <= 0) {
+            winnerIndex = i;
+            break;
+        }
+    }
+
     const spinDuration = 18000;
     const rotations = 10;
-    const randomPrize = Math.floor(Math.random() * availablePrizes.length);
     const anglePerSlice = 360 / availablePrizes.length;
-    const targetAngle = (randomPrize * anglePerSlice) + (rotations * 360) + (anglePerSlice / 2);
+    const targetAngle = (winnerIndex * anglePerSlice) + (rotations * 360) + (anglePerSlice / 2);
 
     const spinBtn = document.getElementById('spin-btn');
     spinBtn.disabled = true;
@@ -398,10 +421,10 @@ function spinWheel() {
             chart.update();
             
             stopSpinSound();
-            const winner = availablePrizes[randomPrize];
+            const winner = availablePrizes[winnerIndex];
             celebrateWin(winner);
             updateQuantity(winner);
-            startBlinkEffect(randomPrize);
+            startBlinkEffect(winnerIndex);
             isSpinning = false;
             spinBtn.disabled = false;
         }
@@ -439,7 +462,6 @@ function showResult(prize) {
     const resultImage = document.getElementById('result-image');
     const shareBtn = document.getElementById('share-btn');
     
-    // Chuyển hashtag xuống dưới giải thưởng
     let message = `Chúc mừng ${playerInfo.name}! Bạn trúng: ${prize.name}`;
     resultText.innerHTML = `
         <p style="font-size: 1.4em; font-weight: bold; color: ${prize.color || '#2E7D32'}">${message}</p>
@@ -465,24 +487,20 @@ function showResult(prize) {
 }
 
 async function shareResult(prize) {
-    const resultSection = document.getElementById('result'); // Chụp toàn bộ khu vực kết quả
+    const resultSection = document.getElementById('result');
     try {
-        // Chuyển khu vực kết quả thành ảnh
         const canvas = await html2canvas(resultSection, {
             backgroundColor: '#ffffff',
             scale: 2
         });
         const imgData = canvas.toDataURL('image/png');
         
-        // Chuyển data URL thành Blob
         const blob = await fetch(imgData).then(res => res.blob());
         const file = new File([blob], 'ket-qua-vong-quay.png', { type: 'image/png' });
 
-        // Nội dung chia sẻ
         const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${playerInfo.name} đã trúng ${prize.name}!`;
         console.log('Nội dung chia sẻ:', shareText);
 
-        // Sử dụng Web Share API để chia sẻ trực tiếp
         if (navigator.share) {
             await navigator.share({
                 title: programName,
@@ -491,7 +509,6 @@ async function shareResult(prize) {
             });
             showNotification('Đã chia sẻ thành công lên mạng xã hội!');
         } else {
-            // Nếu trình duyệt không hỗ trợ Web Share API, fallback về tải ảnh
             const downloadLink = document.createElement('a');
             downloadLink.href = imgData;
             downloadLink.download = 'ket-qua-vong-quay.png';
@@ -508,8 +525,12 @@ async function updateQuantity(winner) {
     winner.quantity--;
     initWheel();
     
+    const playedPlayers = JSON.parse(localStorage.getItem('playedPlayers') || '[]');
+    playedPlayers.push(playerInfo.phone);
+    localStorage.setItem('playedPlayers', JSON.stringify(playedPlayers));
+
     try {
-        const updateUrl = 'https://script.google.com/macros/s/AKfycbx2Qfwi8MLcDMAlVmSvl-9E3UsmIoym2UePTd9NRj5Hco8OXLNCgzUDBVXk-fvKHCtd/exec';
+        const updateUrl = 'https://script.google.com/macros/s/AKfycbx-RjmDQM3hUuPfc79PokYcR-QYh99H-PWzicdpRPmtgN6Dk_ekxN3zkHjpL2CXaBAg/exec';
         
         await fetch(updateUrl, {
             method: 'POST',
@@ -537,7 +558,9 @@ async function updateQuantity(winner) {
                     phone: playerInfo.phone,
                     facebook: playerInfo.facebook || '',
                     zalo: playerInfo.zalo || '',
-                    prize: winner.name
+                    prize: winner.name,
+                    followedPage: playerInfo.followedPage ? 'Yes' : 'No',
+                    likedPost: playerInfo.likedPost ? 'Yes' : 'No'
                 }
             })
         });
@@ -586,11 +609,14 @@ function closeModal() {
 
 function showPlayerInfoModal() {
     const modal = document.getElementById('player-info-modal');
-    modal.style.display = 'flex';
+    const fbPageLink = document.getElementById('fb-page-link');
+    const fbPostLink = document.getElementById('fb-post-link');
     
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
+    fbPageLink.href = prizes[0]?.fbPage || '#';
+    fbPostLink.href = prizes[0]?.fbPost || '#';
+    
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('show'), 10);
 }
 
 function closePlayerInfoModal() {
@@ -622,7 +648,9 @@ document.addEventListener('DOMContentLoaded', () => {
             address: document.getElementById('player-address').value.trim(),
             phone: document.getElementById('player-phone').value.trim(),
             facebook: document.getElementById('player-facebook').value.trim(),
-            zalo: document.getElementById('player-zalo').value.trim()
+            zalo: document.getElementById('player-zalo').value.trim(),
+            followedPage: document.getElementById('player-follow-fb').checked,
+            likedPost: document.getElementById('player-like-post').checked
         };
         closePlayerInfoModal();
         document.getElementById('spin-btn').disabled = false;

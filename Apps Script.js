@@ -11,23 +11,23 @@ function doPost(e) {
   var data = JSON.parse(e.postData.contents);
 
   if (data.action === 'updatePlayerInfo') {
-    // Ghi thông tin người chơi vào Sheet 2
     var playerInfo = data.playerInfo;
     var lastRow = sheet2.getLastRow();
     var newRow = lastRow + 1;
 
     sheet2.getRange(newRow, 1).setValue(lastRow); // STT
-    sheet2.getRange(newRow, 2).setValue(playerInfo.name); // TÊN KHÁCH HÀNG
-    sheet2.getRange(newRow, 3).setValue(playerInfo.address); // ĐỊA CHỈ
-    sheet2.getRange(newRow, 4).setValue(playerInfo.phone); // SỐ ĐIỆN THOẠI
-    sheet2.getRange(newRow, 5).setValue(playerInfo.facebook); // FACEBOOK
-    sheet2.getRange(newRow, 6).setValue(playerInfo.zalo); // ZALO
-    sheet2.getRange(newRow, 7).setValue(playerInfo.prize); // TRÚNG GIẢI
+    sheet2.getRange(newRow, 2).setValue(playerInfo.name);
+    sheet2.getRange(newRow, 3).setValue(playerInfo.address);
+    sheet2.getRange(newRow, 4).setValue(playerInfo.phone);
+    sheet2.getRange(newRow, 5).setValue(playerInfo.facebook);
+    sheet2.getRange(newRow, 6).setValue(playerInfo.zalo);
+    sheet2.getRange(newRow, 7).setValue(playerInfo.prize);
+    sheet2.getRange(newRow, 8).setValue(playerInfo.followedPage); // Cột H: Theo dõi trang
+    sheet2.getRange(newRow, 9).setValue(playerInfo.likedPost);    // Cột I: Thích bài viết
 
     return ContentService.createTextOutput("Player info updated")
       .setMimeType(ContentService.MimeType.TEXT);
   } else {
-    // Cập nhật số lượng giải thưởng trong Sheet 1
     var rows = sheet1.getDataRange().getValues();
     
     for (var i = 1; i < rows.length; i++) {

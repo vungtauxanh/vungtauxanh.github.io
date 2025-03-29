@@ -531,3 +531,13 @@ footer h3 {
   0% { transform: translateY(0) rotate(0deg); }
   100% { transform: translateY(-100vh) rotate(360deg); }
 }
+.form-group input[type="checkbox"] {
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.form-group a {
+    color: var(--primary-color);
+    text-decoration: underline;
+    margin-left: 10px;
+}
