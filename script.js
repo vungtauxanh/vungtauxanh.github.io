@@ -310,7 +310,7 @@ function playSpinSound() {
         console.log('Spin sound started');
     }).catch(err => {
         console.error('Spin audio error:', err);
-        showNotification('Không thể phát âm thanh vòng quay! Vui lòng kiểm tra chế độ âm thanh trên thiết bị.');
+        showNotification('Không thể phát âm thanh vòng quay!');
     });
 }
 
@@ -339,7 +339,7 @@ function playWinSound() {
         }, 5000);
     }).catch(err => {
         console.error('Clap audio error:', err);
-        showNotification('Không thể phát tiếng vỗ tay! Vui lòng kiểm tra chế độ âm thanh trên thiết bị hoặc cho phép âm thanh trong trình duyệt.');
+        showNotification('Không thể phát tiếng vỗ tay!');
     });
 }
 
@@ -439,6 +439,7 @@ function showResult(prize) {
     const resultImage = document.getElementById('result-image');
     const shareBtn = document.getElementById('share-btn');
     
+    // Chuyển hashtag xuống dưới giải thưởng
     let message = `Chúc mừng ${playerInfo.name}! Bạn trúng: ${prize.name}`;
     resultText.innerHTML = `
         <p style="font-size: 1.4em; font-weight: bold; color: ${prize.color || '#2E7D32'}">${message}</p>
@@ -463,24 +464,43 @@ function showResult(prize) {
     playWinSound();
 }
 
-function shareResult(prize) {
+async function shareResult(prize) {
+    const resultSection = document.getElementById('result'); // Chụp toàn bộ khu vực kết quả
     try {
-        // Nội dung chia sẻ (chỉ văn bản)
+        // Chuyển khu vực kết quả thành ảnh
+        const canvas = await html2canvas(resultSection, {
+            backgroundColor: '#ffffff',
+            scale: 2
+        });
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Chuyển data URL thành Blob
+        const blob = await fetch(imgData).then(res => res.blob());
+        const file = new File([blob], 'ket-qua-vong-quay.png', { type: 'image/png' });
+
+        // Nội dung chia sẻ
         const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${playerInfo.name} đã trúng ${prize.name}!`;
         console.log('Nội dung chia sẻ:', shareText);
 
-        // URL của trang web để chia sẻ
-        const shareUrl = 'https://vungtauxanh.github.io/';
-
-        // Tạo URL chia sẻ cho Facebook với tham số quote chính xác
-        const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
-
-        // Mở URL trong tab mới
-        window.open(facebookShareUrl, '_blank');
-        showNotification('Đã mở Facebook để bạn chia sẻ!');
+        // Sử dụng Web Share API để chia sẻ trực tiếp
+        if (navigator.share) {
+            await navigator.share({
+                title: programName,
+                text: shareText,
+                files: [file]
+            });
+            showNotification('Đã chia sẻ thành công lên mạng xã hội!');
+        } else {
+            // Nếu trình duyệt không hỗ trợ Web Share API, fallback về tải ảnh
+            const downloadLink = document.createElement('a');
+            downloadLink.href = imgData;
+            downloadLink.download = 'ket-qua-vong-quay.png';
+            downloadLink.click();
+            showNotification('Trình duyệt không hỗ trợ chia sẻ trực tiếp. Ảnh đã được tải xuống!');
+        }
     } catch (error) {
-        console.error('Error sharing to Facebook:', error);
-        showNotification('Không thể mở Facebook. Vui lòng thử lại!');
+        console.error('Error sharing result:', error);
+        showNotification('Không thể chia sẻ kết quả. Vui lòng thử lại!');
     }
 }
 
