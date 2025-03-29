@@ -310,7 +310,7 @@ function playSpinSound() {
         console.log('Spin sound started');
     }).catch(err => {
         console.error('Spin audio error:', err);
-        showNotification('Không thể phát âm thanh vòng quay!');
+        showNotification('Không thể phát âm thanh vòng quay! Vui lòng kiểm tra chế độ âm thanh trên thiết bị.');
     });
 }
 
@@ -339,7 +339,7 @@ function playWinSound() {
         }, 5000);
     }).catch(err => {
         console.error('Clap audio error:', err);
-        showNotification('Không thể phát tiếng vỗ tay!');
+        showNotification('Không thể phát tiếng vỗ tay! Vui lòng kiểm tra chế độ âm thanh trên thiết bị hoặc cho phép âm thanh trong trình duyệt.');
     });
 }
 
@@ -470,151 +470,3 @@ function shareResult(prize) {
         console.log('Nội dung chia sẻ:', shareText);
 
         // URL của trang web để chia sẻ
-        const shareUrl = 'https://vungtauxanh.github.io/';
-
-        // Tạo URL chia sẻ cho Facebook
-        const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
-
-        // Mở URL trong tab mới
-        window.open(facebookShareUrl, '_blank');
-        showNotification('Đã mở Facebook để bạn chia sẻ!');
-    } catch (error) {
-        console.error('Error sharing to Facebook:', error);
-        showNotification('Không thể mở Facebook. Vui lòng thử lại!');
-    }
-}
-
-async function updateQuantity(winner) {
-    winner.quantity--;
-    initWheel();
-    
-    try {
-        const updateUrl = 'https://script.google.com/macros/s/AKfycbx2Qfwi8MLcDMAlVmSvl-9E3UsmIoym2UePTd9NRj5Hco8OXLNCgzUDBVXk-fvKHCtd/exec';
-        
-        await fetch(updateUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                prizeName: winner.name,
-                newQuantity: winner.quantity
-            })
-        });
-
-        await fetch(updateUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'updatePlayerInfo',
-                playerInfo: {
-                    name: playerInfo.name,
-                    address: playerInfo.address,
-                    phone: playerInfo.phone,
-                    facebook: playerInfo.facebook || '',
-                    zalo: playerInfo.zalo || '',
-                    prize: winner.name
-                }
-            })
-        });
-
-        setTimeout(fetchData, 2000);
-    } catch (error) {
-        console.error('Error updating quantity:', error);
-        showNotification('Lỗi khi cập nhật số lượng. Vui lòng thử lại!');
-    }
-}
-
-function showLoading() {
-    document.getElementById('loading-spinner').style.display = 'block';
-    document.getElementById('wheel').style.opacity = '0.5';
-    document.getElementById('spin-btn').disabled = true;
-}
-
-function hideLoading() {
-    document.getElementById('loading-spinner').style.display = 'none';
-    document.getElementById('wheel').style.opacity = '1';
-    if (playerInfo) {
-        document.getElementById('spin-btn').disabled = false;
-    }
-}
-
-function showNotification(message) {
-    const modal = document.getElementById('notification-modal');
-    const modalText = document.getElementById('notification-text');
-    
-    modalText.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
-    modal.style.display = 'flex';
-    
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
-}
-
-function closeModal() {
-    const modal = document.getElementById('notification-modal');
-    modal.classList.remove('show');
-    
-    setTimeout(() => {
-        modal.style.display = 'none';
-    }, 300);
-}
-
-function showPlayerInfoModal() {
-    const modal = document.getElementById('player-info-modal');
-    modal.style.display = 'flex';
-    
-    setTimeout(() => {
-        modal.classList.add('show');
-    }, 10);
-}
-
-function closePlayerInfoModal() {
-    const modal = document.getElementById('player-info-modal');
-    modal.classList.remove('show');
-    
-    setTimeout(() => {
-        modal.style.display = 'none';
-    }, 300);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.body.style.opacity = '1';
-    
-    createParticles();
-    preloadAudio();
-    
-    document.getElementById('spin-btn').addEventListener('click', spinWheel);
-    
-    document.getElementById('notification-modal').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
-    });
-
-    const playerInfoForm = document.getElementById('player-info-form');
-    playerInfoForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        playerInfo = {
-            name: document.getElementById('player-name').value.trim(),
-            address: document.getElementById('player-address').value.trim(),
-            phone: document.getElementById('player-phone').value.trim(),
-            facebook: document.getElementById('player-facebook').value.trim(),
-            zalo: document.getElementById('player-zalo').value.trim()
-        };
-        closePlayerInfoModal();
-        document.getElementById('spin-btn').disabled = false;
-    });
-
-    showPlayerInfoModal();
-    
-    fetchData();
-});
-
-if (typeof confetti === 'undefined') {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.min.js';
-    document.head.appendChild(script);
-}
