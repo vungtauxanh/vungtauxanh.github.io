@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vòng Quay Trúng Thưởng</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta name="description" content="Chương trình vòng quay trúng thưởng với nhiều phần quà hấp dẫn">
+</head>
+<body style="opacity: 0; transition: opacity 0.5s ease;">
+    <!-- Floating particles background -->
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <header id="program-title">
+            <i class="fas fa-gift"></i> Vòng Quay May Mắn <i class="fas fa-gift"></i>
+        </header>
+        <main class="main-content">
+            <div class="wheel-section">
+                <div class="spinner" id="loading-spinner" style="display: none;">
+                    <div class="loader"></div>
+                    <p style="margin-top: 10px; font-weight: bold;">Đang tải dữ liệu...</p>
+                </div>
+                <canvas id="wheel" width="400" height="400"></canvas>
+                <button id="spin-btn" class="spin-button" disabled>
+                    <span class="btn-text">QUAY</span>
+                    <i class="fas fa-redo-alt btn-icon"></i>
+                </button>
+            </div>
+            <div class="result-section">
+                <h2><i class="fas fa-trophy"></i> Kết quả <i class="fas fa-trophy"></i></h2>
+                <div id="result">
+                    <p id="result-text">Chưa có kết quả</p>
+                    <img id="result-image" src="" alt="" style="display: none;">
+                    <button id="share-btn" class="modal-btn" style="display: none; margin-top: 20px;">
+                        <i class="fas fa-share-alt"></i> Chia sẻ
+                    </button>
+                </div>
+                <div id="winner-celebration" style="display: none;">
+                    <div class="confetti-container" id="confetti"></div>
+                </div>
+            </div>
+        </main>
+        <footer>
+            <h3><i class="fas fa-hand-holding-heart"></i> Nhà tài trợ chương trình</h3>
+            <div id="sponsor-logos" class="sponsor-logos"></div>
+        </footer>
+    </div>
+
+    <!-- Modal thông báo -->
+    <div id="notification-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">×</span>
+            <h3><i class="fas fa-bell"></i> Thông báo</h3>
+            <p id="notification-text"></p>
+            <button onclick="closeModal()" class="modal-btn">Đóng</button>
+        </div>
+    </div>
+
+    <!-- Modal nhập thông tin người chơi -->
+    <div id="player-info-modal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-user"></i> Thông tin người chơi</h3>
+            <form id="player-info-form">
+                <div class="form-group">
+                    <label for="player-name">Họ và tên <span class="required">*</span></label>
+                    <input type="text" id="player-name" required placeholder="Nhập họ và tên">
+                </div>
+                <div class="form-group">
+                    <label for="player-address">Địa chỉ <span class="required">*</span></label>
+                    <input type="text" id="player-address" required placeholder="Nhập địa chỉ">
+                </div>
+                <div class="form-group">
+                    <label for="player-phone">Số điện thoại <span class="required">*</span></label>
+                    <input type="tel" id="player-phone" required placeholder="Nhập số điện thoại">
+                </div>
+                <div class="form-group">
+                    <label for="player-facebook">Facebook</label>
+                    <input type="text" id="player-facebook" placeholder="Nhập link Facebook (nếu có)">
+                </div>
+                <div class="form-group">
+                    <label for="player-zalo">Zalo</label>
+                    <input type="text" id="player-zalo" placeholder="Nhập số Zalo (nếu có)">
+                </div>
+                <button type="submit" class="modal-btn">Xác nhận</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="script.js" defer></script>
+</body>
+</html>
