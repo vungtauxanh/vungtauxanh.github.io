@@ -439,7 +439,6 @@ function showResult(prize) {
     const resultImage = document.getElementById('result-image');
     const shareBtn = document.getElementById('share-btn');
     
-    // Chuyển hashtag xuống dưới giải thưởng
     let message = `Chúc mừng ${playerInfo.name}! Bạn trúng: ${prize.name}`;
     resultText.innerHTML = `
         <p style="font-size: 1.4em; font-weight: bold; color: ${prize.color || '#2E7D32'}">${message}</p>
@@ -447,9 +446,19 @@ function showResult(prize) {
     `;
     
     if (prize.image) {
-        resultImage.src = prize.image;
-        resultImage.style.display = 'block';
-        resultImage.alt = `Hình ảnh ${prize.name}`;
+        // Đảm bảo ảnh được tải với CORS
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = prize.image;
+        img.onload = () => {
+            resultImage.src = prize.image;
+            resultImage.style.display = 'block';
+            resultImage.alt = `Hình ảnh ${prize.name}`;
+        };
+        img.onerror = () => {
+            console.error('Không thể tải ảnh giải thưởng:', prize.image);
+            resultImage.style.display = 'none';
+        };
     } else {
         resultImage.style.display = 'none';
     }
@@ -470,7 +479,9 @@ async function shareResult(prize) {
         // Chuyển khu vực kết quả thành ảnh
         const canvas = await html2canvas(resultSection, {
             backgroundColor: '#ffffff',
-            scale: 2
+            scale: 2,
+            useCORS: true, // Bật useCORS để xử lý ảnh từ domain khác
+            logging: true // Bật logging để debug
         });
         const imgData = canvas.toDataURL('image/png');
         
@@ -482,25 +493,37 @@ async function shareResult(prize) {
         const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${playerInfo.name} đã trúng ${prize.name}!`;
         console.log('Nội dung chia sẻ:', shareText);
 
-        // Sử dụng Web Share API để chia sẻ trực tiếp
+        // Kiểm tra Web Share API
         if (navigator.share) {
-            await navigator.share({
-                title: programName,
-                text: shareText,
-                files: [file]
-            });
-            showNotification('Đã chia sẻ thành công lên mạng xã hội!');
+            // Kiểm tra khả năng chia sẻ file
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    text: shareText,
+                    files: [file]
+                });
+                showNotification('Đã chia sẻ thành công lên mạng xã hội!');
+            } else {
+                // Nếu không hỗ trợ chia sẻ file, chỉ chia sẻ text và cung cấp link tải ảnh
+                await navigator.share({
+                    text: `${shareText}\nTải ảnh kết quả tại: ${imgData}`
+                });
+                showNotification('Đã chia sẻ nội dung. Trình duyệt không hỗ trợ chia sẻ ảnh trực tiếp.');
+            }
         } else {
-            // Nếu trình duyệt không hỗ trợ Web Share API, fallback về tải ảnh
+            // Fallback: Tải ảnh về nếu không hỗ trợ Web Share API
             const downloadLink = document.createElement('a');
             downloadLink.href = imgData;
             downloadLink.download = 'ket-qua-vong-quay.png';
             downloadLink.click();
-            showNotification('Trình duyệt không hỗ trợ chia sẻ trực tiếp. Ảnh đã được tải xuống!');
+            showNotification('Trình duyệt không hỗ trợ chia sẻ trực tiếp. Ảnh đã được tải xuống! Bạn có thể chia sẻ thủ công.');
         }
     } catch (error) {
         console.error('Error sharing result:', error);
-        showNotification('Không thể chia sẻ kết quả. Vui lòng thử lại!');
+        // Fallback: Tải ảnh về và cung cấp URL chia sẻ WhatsApp
+        const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${playerInfo.name} đã trúng ${prize.name}!`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + '\nTải ảnh kết quả tại: ' + imgData)}`;
+        window.open(whatsappUrl, '_blank');
+        showNotification('Không thể chia sẻ trực tiếp. Đã mở WhatsApp để bạn chia sẻ thủ công!');
     }
 }
 
