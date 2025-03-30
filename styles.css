@@ -531,6 +531,7 @@ footer h3 {
   0% { transform: translateY(0) rotate(0deg); }
   100% { transform: translateY(-100vh) rotate(360deg); }
 }
+
 .form-group input[type="checkbox"] {
     margin-right: 10px;
     vertical-align: middle;
@@ -540,4 +541,18 @@ footer h3 {
     color: var(--primary-color);
     text-decoration: underline;
     margin-left: 10px;
+}
+#reset-btn {
+    padding: 10px 30px;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: var(--transition);
+}
+#reset-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(231, 76, 60, 0.6);
 }

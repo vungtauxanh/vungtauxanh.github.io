@@ -6,7 +6,9 @@ let spinAudio;
 let winAudio;
 let playerInfo = null;
 let programName = '';
-let hasSpun = false; // Biến cờ để theo dõi xem đã quay thưởng và có kết quả hay chưa
+let hasSpun = false;
+let userId = '';
+let token = '';
 
 function preloadAudio() {
     spinAudio = new Audio('sounds/spin.mp3');
@@ -47,41 +49,53 @@ function createParticles() {
 }
 
 async function fetchData() {
-    const sheetUrl = 'https://script.google.com/macros/s/AKfycbx-RjmDQM3hUuPfc79PokYcR-QYh99H-PWzicdpRPmtgN6Dk_ekxN3zkHjpL2CXaBAg/exec';
+    const masterApiUrl = 'https://script.google.com/macros/s/AKfycbz5OeqNxEmWUgny-3u0z6gpZWYHeL2hA1q478YfM-fwATtTnSxqFu_VZBCLBnJBB4c/exec';
+    
     try {
         showLoading();
-        const response = await fetch(sheetUrl, {
+        const response = await fetch(`${masterApiUrl}?userId=${userId}&token=${token}`, {
             method: 'GET',
             redirect: 'follow'
         });
         const data = await response.json();
         
-        if (!data || data.length === 0) {
-            throw new Error('Dữ liệu từ Google Sheet rỗng hoặc không hợp lệ.');
+        if (data.error) {
+            throw new Error(data.error);
         }
 
         const dataWithoutHeader = data.slice(1);
+        prizes = dataWithoutHeader
+            .filter(row => row[1] && row[2]) // Đảm bảo có name và quantity
+            .map(row => ({
+                program: row[0] || '',
+                name: row[1] || 'Không xác định',
+                quantity: parseInt(row[2]) || 0,
+                image: row[3] || '',
+                color: row[4] || '',
+                logo: row[5] || '',
+                background: row[6] || '',
+                companyLogo: row[7] || '',
+                hashtag: row[8] || '',
+                fbPage: row[9] || '',
+                fbPost: row[10] || '',
+                requirePlayerInfo: row[11] || 'no'
+            }));
 
-        prizes = dataWithoutHeader.map(row => ({
-            program: row[0],
-            name: row[1],
-            quantity: parseInt(row[2]),
-            image: row[3],
-            color: row[4],
-            logo: row[5],
-            background: row[6],
-            companyLogo: row[7],
-            hashtag: row[8],
-            fbPage: row[9],  // Cột J: Link trang fanpage
-            fbPost: row[10]  // Cột K: Link bài viết
-        }));
+        if (prizes.length === 0) {
+            throw new Error('Không có dữ liệu giải thưởng hợp lệ');
+        }
 
         console.log('Dữ liệu từ Google Sheet:', prizes);
         programName = prizes[0].program;
         updateUI();
         initWheel();
         hideLoading();
-        showPlayerInfoModal(); // Modal chỉ được gọi một lần khi trang tải
+
+        if (prizes[0].requirePlayerInfo.toLowerCase() === 'yes') {
+            showPlayerInfoModal();
+        } else {
+            document.getElementById('spin-btn').disabled = false;
+        }
     } catch (error) {
         console.error('Error fetching data:', error);
         hideLoading();
@@ -111,7 +125,7 @@ function updateUI() {
     } else {
         programTitle.textContent = programContent;
         programTitle.style.color = prizes[0].color;
-        if (prizes[0].color) {
+        if (prizes[0].color) { // Sửa lỗi cú pháp từ prizes0].color thành prizes[0].color
             programTitle.style.background = `linear-gradient(135deg, ${prizes[0].color} 0%, ${lightenColor(prizes[0].color, 20)} 100%)`;
             programTitle.style.webkitBackgroundClip = 'text';
             programTitle.style.webkitTextFillColor = 'transparent';
@@ -166,6 +180,11 @@ function initWheel() {
     const ctx = document.getElementById('wheel').getContext('2d');
     const availablePrizes = prizes.filter(prize => prize.quantity > 0);
     
+    if (availablePrizes.length === 0) {
+        showNotification('Không còn giải thưởng nào!');
+        return;
+    }
+
     if (chart) chart.destroy();
     
     const backgroundColors = generateWheelColors(availablePrizes.length);
@@ -202,6 +221,9 @@ function initWheel() {
                     },
                     formatter: (value, context) => {
                         const prize = availablePrizes[context.dataIndex];
+                        if (!prize || !prize.name) {
+                            return 'Không xác định\n(0)';
+                        }
                         const name = prize.name.length > 10 ? prize.name.substring(0, 7) + '...' : prize.name;
                         return `${name}\n(${prize.quantity})`;
                     },
@@ -361,21 +383,22 @@ function showSpinning() {
 function spinWheel() {
     if (isSpinning) return;
 
-    // Nếu đã quay và có kết quả, không cho phép quay lại và không hiện modal
     if (hasSpun) {
         showNotification('Bạn đã quay và có kết quả rồi! Mỗi người chỉ được quay 1 lần.');
         return;
     }
 
-    if (!playerInfo || !playerInfo.followedPage || !playerInfo.likedPost) {
-        showNotification('Vui lòng theo dõi trang Facebook và thích bài viết trước khi quay!');
-        return; // Không gọi lại showPlayerInfoModal()
-    }
+    if (prizes[0].requirePlayerInfo.toLowerCase() === 'yes') {
+        if (!playerInfo || !playerInfo.followedPage || !playerInfo.likedPost) {
+            showNotification('Vui lòng theo dõi trang Facebook và thích bài viết trước khi quay!');
+            return;
+        }
 
-    const playedPlayers = JSON.parse(localStorage.getItem('playedPlayers') || '[]');
-    if (playedPlayers.includes(playerInfo.phone)) {
-        showNotification('Bạn đã tham gia quay rồi! Mỗi người chỉ được quay 1 lần.');
-        return;
+        const playedPlayers = JSON.parse(localStorage.getItem('playedPlayers') || '[]');
+        if (playedPlayers.includes(playerInfo.phone)) {
+            showNotification('Bạn đã tham gia quay rồi! Mỗi người chỉ được quay 1 lần.');
+            return;
+        }
     }
 
     isSpinning = true;
@@ -436,7 +459,7 @@ function spinWheel() {
             startBlinkEffect(winnerIndex);
             isSpinning = false;
             spinBtn.disabled = false;
-            hasSpun = true; // Đặt cờ hasSpun thành true sau khi có kết quả
+            hasSpun = true;
         }
     }
     
@@ -472,7 +495,10 @@ function showResult(prize) {
     const resultImage = document.getElementById('result-image');
     const shareBtn = document.getElementById('share-btn');
     
-    let message = `Chúc mừng ${playerInfo.name}! Bạn trúng: ${prize.name}`; // Giữ thông tin người chơi trong kết quả
+    let message = prizes[0].requirePlayerInfo.toLowerCase() === 'yes' 
+        ? `Chúc mừng ${playerInfo.name}! Bạn trúng: ${prize.name}`
+        : `Chúc mừng! Bạn trúng: ${prize.name}`;
+    
     resultText.innerHTML = `
         <p style="font-size: 1.4em; font-weight: bold; color: ${prize.color || '#2E7D32'}">${message}</p>
         <p style="font-size: 1.2em; color: ${prize.color || '#2E7D32'}; margin-top: 10px;">${prize.hashtag}</p>
@@ -508,7 +534,7 @@ async function shareResult(prize) {
         const blob = await fetch(imgData).then(res => res.blob());
         const file = new File([blob], 'ket-qua-vong-quay.png', { type: 'image/png' });
 
-        const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${playerInfo.name} đã trúng ${prize.name}!`; // Giữ thông tin người chơi trong chia sẻ
+        const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${prizes[0].requirePlayerInfo.toLowerCase() === 'yes' ? playerInfo.name : 'bạn'} đã trúng ${prize.name}!`;
         console.log('Nội dung chia sẻ:', shareText);
 
         if (navigator.share) {
@@ -532,48 +558,48 @@ async function shareResult(prize) {
 }
 
 async function updateQuantity(winner) {
+    const masterApiUrl = 'https://script.google.com/macros/s/AKfycbz5OeqNxEmWUgny-3u0z6gpZWYHeL2hA1q478YfM-fwATtTnSxqFu_VZBCLBnJBB4c/exec';
+
     winner.quantity--;
     initWheel();
     
     const playedPlayers = JSON.parse(localStorage.getItem('playedPlayers') || '[]');
-    playedPlayers.push(playerInfo.phone);
+    if (prizes[0].requirePlayerInfo.toLowerCase() === 'yes') {
+        playedPlayers.push(playerInfo.phone);
+    }
     localStorage.setItem('playedPlayers', JSON.stringify(playedPlayers));
 
     try {
-        const updateUrl = 'https://script.google.com/macros/s/AKfycbx-RjmDQM3hUuPfc79PokYcR-QYh99H-PWzicdpRPmtgN6Dk_ekxN3zkHjpL2CXaBAg/exec';
-        
-        await fetch(updateUrl, {
+        await fetch(masterApiUrl + `?userId=${userId}&token=${token}`, {
             method: 'POST',
             mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 prizeName: winner.name,
                 newQuantity: winner.quantity
             })
         });
 
-        await fetch(updateUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'updatePlayerInfo',
-                playerInfo: {
-                    name: playerInfo.name,
-                    address: playerInfo.address,
-                    phone: playerInfo.phone,
-                    facebook: playerInfo.facebook || '',
-                    zalo: playerInfo.zalo || '',
-                    prize: winner.name,
-                    followedPage: playerInfo.followedPage ? 'Yes' : 'No',
-                    likedPost: playerInfo.likedPost ? 'Yes' : 'No'
-                }
-            })
-        });
+        if (prizes[0].requirePlayerInfo.toLowerCase() === 'yes') {
+            await fetch(masterApiUrl + `?userId=${userId}&token=${token}`, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'updatePlayerInfo',
+                    playerInfo: {
+                        name: playerInfo.name,
+                        address: playerInfo.address,
+                        phone: playerInfo.phone,
+                        facebook: playerInfo.facebook || '',
+                        zalo: playerInfo.zalo || '',
+                        prize: winner.name,
+                        followedPage: playerInfo.followedPage ? 'Yes' : 'No',
+                        likedPost: playerInfo.likedPost ? 'Yes' : 'No'
+                    }
+                })
+            });
+        }
 
         setTimeout(fetchData, 2000);
     } catch (error) {
@@ -616,7 +642,6 @@ function closeModal() {
 }
 
 function showPlayerInfoModal() {
-    // Không gọi modal nếu đã có kết quả
     if (hasSpun) {
         return;
     }
@@ -638,11 +663,9 @@ function showPlayerInfoModal() {
     fbPostLink.href = fbPost;
     fbPostLink.textContent = fbPost !== '#' ? 'Click để thích' : 'Link bài viết không khả dụng';
 
-    // Đặt lại trạng thái checkbox mỗi lần mở modal
     followFbCheckbox.checked = false;
     likePostCheckbox.checked = false;
 
-    // Lưu trạng thái và tích checkbox khi nhấp vào link
     fbPageLink.addEventListener('click', () => {
         localStorage.setItem('hasFollowedPage', 'true');
         followFbCheckbox.checked = true;
@@ -668,6 +691,18 @@ function closePlayerInfoModal() {
     }, 300);
 }
 
+function showLoginModal() {
+    const modal = document.getElementById('login-modal');
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+function closeLoginModal() {
+    const modal = document.getElementById('login-modal');
+    modal.classList.remove('show');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     document.body.style.opacity = '1';
     
@@ -676,6 +711,18 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.getElementById('spin-btn').addEventListener('click', spinWheel);
     
+    document.getElementById('reset-btn').addEventListener('click', () => {
+        if (isSpinning) return;
+        hasSpun = false;
+        stopBlinkEffect();
+        initWheel();
+        document.getElementById('result-text').textContent = '';
+        document.getElementById('result-image').style.display = 'none';
+        document.getElementById('share-btn').style.display = 'none';
+        document.getElementById('spin-btn').disabled = false;
+        showNotification('Đã reset vòng quay!');
+    });
+
     document.getElementById('notification-modal').addEventListener('click', function(e) {
         if (e.target === this) closeModal();
     });
@@ -705,7 +752,21 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('spin-btn').disabled = false;
     });
 
-    fetchData();
+    const loginForm = document.getElementById('login-form');
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        userId = document.getElementById('user-id').value.trim();
+        token = document.getElementById('token').value.trim();
+        
+        if (userId && token) {
+            closeLoginModal();
+            fetchData();
+        } else {
+            showNotification('Vui lòng nhập đầy đủ User ID và Token!');
+        }
+    });
+
+    showLoginModal();
 });
 
 if (typeof confetti === 'undefined') {

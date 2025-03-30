@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý User</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2E7D32;
+            --light-text: #fff;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .admin-container {
+            max-width: 90%;
+            width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--secondary-color);
+            text-align: center;
+            margin: 0;
+            font-size: 2em;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        #logout-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: var(--transition);
+        }
+
+        #logout-btn:hover {
+            background: #d32f2f;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(244, 67, 54, 0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            table-layout: auto;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        th {
+            background: var(--primary-color);
+            color: var(--light-text);
+            font-weight: 600;
+        }
+
+        td {
+            max-width: 200px; /* Giới hạn chiều rộng của cột */
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: var(--transition);
+        }
+
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        .edit-btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 5px;
+            transition: var(--transition);
+        }
+
+        .edit-btn:hover {
+            background-color: #1976D2;
+        }
+
+        #add-user-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        #add-user-form input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        #add-user-form button {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #2E7D32 100%);
+            color: var(--light-text);
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: var(--transition);
+        }
+
+        #add-user-form button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-container {
+                margin: 10px;
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            th, td {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+
+            td {
+                max-width: 150px;
+            }
+
+            #logout-btn {
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+
+            thead tr {
+                display: none;
+            }
+
+            tr {
+                margin-bottom: 10px;
+                border-bottom: 2px solid #ddd;
+            }
+
+            td {
+                display: flex;
+                justify-content: space-between;
+                padding: 10px;
+                border: none;
+                border-bottom: 1px solid #eee;
+                position: relative;
+                max-width: 100%;
+            }
+
+            td:before {
+                content: attr(data-label);
+                font-weight: bold;
+                width: 40%;
+                flex-shrink: 0;
+            }
+
+            td:last-child {
+                border-bottom: 0;
+            }
+
+            .edit-btn, .delete-btn {
+                padding: 5px 8px;
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="header-container">
+            <h1>Quản lý User</h1>
+            <button id="logout-btn">Đăng xuất</button>
+        </div>
+        <table id="user-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Email</th>
+                    <th>Sheet ID</th>
+                    <th>API URL</th>
+                    <th>Token</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <form id="add-user-form">
+            <input type="text" id="new-user-id" placeholder="User ID" required>
+            <input type="email" id="new-email" placeholder="Email" required>
+            <input type="text" id="new-sheet-id" placeholder="Sheet ID" required>
+            <input type="text" id="new-api-url" placeholder="API URL" required>
+            <input type="text" id="new-token" placeholder="Token" required>
+            <button type="submit">Thêm User</button>
+        </form>
+    </div>
+
+    <!-- Modal đăng nhập admin -->
+    <div id="admin-login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeAdminLoginModal()">×</span>
+            <h2>Đăng nhập Admin</h2>
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label for="admin-id">Admin ID <span class="required">*</span></label>
+                    <input type="text" id="admin-id" required>
+                </div>
+                <div class="form-group">
+                    <label for="admin-token">Token <span class="required">*</span></label>
+                    <input type="text" id="admin-token" required>
+                </div>
+                <button type="submit" class="modal-btn">Đăng nhập</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal chỉnh sửa user -->
+    <div id="edit-user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeEditModal()">×</span>
+            <h2>Chỉnh sửa User</h2>
+            <form id="edit-user-form">
+                <input type="hidden" id="edit-row-index">
+                <div class="form-group">
+                    <label>User ID</label>
+                    <input type="text" id="edit-user-id" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="edit-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Sheet ID</label>
+                    <input type="text" id="edit-sheet-id" required>
+                </div>
+                <div class="form-group">
+                    <label>API URL</label>
+                    <input type="text" id="edit-api-url" required>
+                </div>
+                <div class="form-group">
+                    <label>Token</label>
+                    <input type="text" id="edit-token" required>
+                </div>
+                <div class="form-group">
+                    <label>Trạng thái</label>
+                    <select id="edit-status">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <button type="submit" class="modal-btn">Lưu</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal thông báo -->
+    <div id="notification-modal" class="modal">
+        <div class="modal-content">
+            <p id="notification-text"></p>
+            <button onclick="closeModal()">Đóng</button>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

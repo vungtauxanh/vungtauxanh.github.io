@@ -23,10 +23,8 @@
                     <p style="margin-top: 10px; font-weight: bold;">Đang tải dữ liệu...</p>
                 </div>
                 <canvas id="wheel" width="400" height="400"></canvas>
-                <button id="spin-btn" class="spin-button" disabled>
-                    <span class="btn-text">QUAY</span>
-                    <i class="fas fa-redo-alt btn-icon"></i>
-                </button>
+                <button id="spin-btn">Quay</button>
+                <button id="reset-btn">Reset</button>
             </div>
             <div class="result-section">
                 <h2><i class="fas fa-trophy"></i> Kết quả <i class="fas fa-trophy"></i></h2>
@@ -96,9 +94,29 @@
         </div>
     </div>
 
+    <!-- Modal Đăng nhập -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeLoginModal()">×</span>
+            <h3><i class="fas fa-lock"></i> Đăng nhập</h3>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="user-id">User ID <span class="required">*</span></label>
+                    <input type="text" id="user-id" required placeholder="Nhập User ID">
+                </div>
+                <div class="form-group">
+                    <label for="token">Token <span class="required">*</span></label>
+                    <input type="text" id="token" required placeholder="Nhập Token">
+                </div>
+                <button type="submit" class="modal-btn">Xác nhận</button>
+            </form>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="script.js" defer></script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'928718d8ff8fbf8e',t:'MTc0MzMzMjM2MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
