@@ -28,7 +28,7 @@
 }
 
 body {
-    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    font-family: 'Poppins', 'Arial', sans-serif; /* Thêm Arial làm font dự phòng */
     min-height: 100vh;
     background-attachment: fixed;
     color: var(--dark-text);
@@ -57,10 +57,9 @@ body {
 }
 
 header {
-
     text-align: center;
-    padding: 30px 20px;
-    font-size: 2.5em;
+    padding: 20px 20px; /* Giảm padding để vừa với tiêu đề dài */
+    font-size: 2em; /* Giảm font-size để phù hợp hơn */
     font-weight: 700;
     color: var(--secondary-color);
     margin-bottom: 20px;
@@ -69,6 +68,7 @@ header {
     box-shadow: var(--shadow);
     position: relative;
     overflow: hidden;
+    letter-spacing: 1px; /* Tăng khoảng cách chữ để dễ đọc */
 }
 
 [data-theme="dark"] header {
@@ -473,8 +473,8 @@ footer h3 {
     }
     
     header {
-        font-size: 2em;
-        padding: 25px 15px;
+        font-size: 1.5em; /* Giảm font-size cho màn hình nhỏ */
+        padding: 15px 10px;
     }
     
     .wheel-section, .result-section {
@@ -493,8 +493,8 @@ footer h3 {
     }
     
     header {
-        font-size: 1.8em;
-        padding: 20px 10px;
+        font-size: 1.2em; /* Giảm thêm font-size */
+        padding: 15px 10px;
     }
     
     .wheel-section, .result-section {
@@ -530,7 +530,7 @@ footer h3 {
     }
     
     header {
-        font-size: 1.5em;
+        font-size: 1em; /* Giảm font-size cho mobile nhỏ */
         border-radius: 0;
     }
     
@@ -607,7 +607,6 @@ footer h3 {
     text-decoration: underline;
     margin-left: 10px;
 }
-/* Thêm vào cuối styles.css hoặc thay thế phần liên quan */
 
 /* Sidebar cho nút theme */
 .theme-sidebar {
@@ -647,11 +646,6 @@ footer h3 {
     background: linear-gradient(135deg, #66BB6A 0%, #455A64 100%);
 }
 
-/* Điều chỉnh header để không bị chồng lấn */
-header {
-    padding-right: 60px; /* Đảm bảo không bị che bởi sidebar */
-}
-
 @media (max-width: 768px) {
     .theme-sidebar {
         right: 5px;
@@ -662,31 +656,4 @@ header {
         height: 35px;
         font-size: 1em;
     }
-    
-    header {
-        padding-right: 45px;
-    }
-}
-
-/* ===CODFE HEADING STYLE #12 === */
-
-.cf-title-12 h3 {
-  font-size:26px; font-weight:700;  letter-spacing:1px; text-transform:uppercase; width:160px; text-align:center; margin:auto; white-space:nowrap; padding-bottom:13px;
-}
-.cf-title-12 h3:before {
-    background-color: #c50000;
-    content: '';
-    display: block;
-    height: 3px;
-    width: 75px;
-    margin-bottom: 5px;
-}
-.cf-title-12 h3:after {
-    background-color: #c50000;
-    content: '';
-    display: block;
-  position:absolute; right:0; bottom:0;
-    height: 3px;
-    width: 75px;
-    margin-bottom: 0.25em;
 }

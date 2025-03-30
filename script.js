@@ -105,10 +105,7 @@ async function fetchData() {
 
 function updateUI() {
     const programTitle = document.getElementById('program-title');
-    programTitle.innerHTML = '<p> </p>';
-	
-	
-	
+    programTitle.innerHTML = '<i class="fas fa-gift"></i> CHƯƠNG TRÌNH USER 2 Vòng Quay May Mắn <i class="fas fa-gift"></i>';
     
     const programContent = prizes[0].program;
     const isImage = programContent.startsWith('http') && (programContent.endsWith('.png') || programContent.endsWith('.jpg') || programContent.endsWith('.jpeg') || programContent.endsWith('.gif'));
@@ -122,11 +119,12 @@ function updateUI() {
         img.onerror = () => {
             console.warn('Không thể tải banner chương trình:', programContent);
             img.style.display = 'none';
-            programTitle.textContent = 'Chương trình không xác định';
+            programTitle.innerHTML = '<i class="fas fa-gift"></i> CHƯƠNG TRÌNH USER 2 Vòng Quay May Mắn <i class="fas fa-gift"></i>';
         };
-        programTitle.insertBefore(img, programTitle.firstChild);
-    } else {
-        programTitle.firstChild.textContent = programContent;
+        programTitle.innerHTML = ''; // Xóa nội dung hiện tại trước khi thêm ảnh
+        programTitle.appendChild(img);
+    } else if (programContent && programContent.trim() !== '') {
+        programTitle.innerHTML = `<i class="fas fa-gift"></i> ${programContent} <i class="fas fa-gift"></i>`;
         programTitle.style.color = prizes[0].color;
         if (prizes[0].color) {
             programTitle.style.background = `linear-gradient(135deg, ${prizes[0].color} 0%, ${lightenColor(prizes[0].color, 20)} 100%)`;
@@ -136,7 +134,7 @@ function updateUI() {
     }
     
     const sponsorLogosContainer = document.getElementById('sponsor-logos');
-    sponsorLogosContainer.innerHTML = '';
+    sponsorLogosContainer.innerHTML = ''; // Hoàn chỉnh dòng này
     const uniqueLogos = [...new Set(prizes.map(prize => prize.logo).filter(logo => logo))];
     
     if (uniqueLogos.length > 0) {
@@ -421,7 +419,7 @@ function spinWheel() {
     const totalQuantity = availablePrizes.reduce((sum, prize) => sum + prize.quantity, 0);
     let randomWeight = Math.random() * totalQuantity;
     let winnerIndex = 0;
-    for (let i0; i < availablePrizes.length; i++) {
+    for (let i = 0; i < availablePrizes.length; i++) {
         randomWeight -= availablePrizes[i].quantity;
         if (randomWeight <= 0) {
             winnerIndex = i;
