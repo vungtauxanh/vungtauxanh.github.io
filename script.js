@@ -65,7 +65,7 @@ async function fetchData() {
 
         const dataWithoutHeader = data.slice(1);
         prizes = dataWithoutHeader
-            .filter(row => row[1] && row[2]) // Đảm bảo có name và quantity
+            .filter(row => row[1] && row[2])
             .map(row => ({
                 program: row[0] || '',
                 name: row[1] || 'Không xác định',
@@ -105,7 +105,10 @@ async function fetchData() {
 
 function updateUI() {
     const programTitle = document.getElementById('program-title');
-    programTitle.innerHTML = '';
+    programTitle.innerHTML = '<p> </p>';
+	
+	
+	
     
     const programContent = prizes[0].program;
     const isImage = programContent.startsWith('http') && (programContent.endsWith('.png') || programContent.endsWith('.jpg') || programContent.endsWith('.jpeg') || programContent.endsWith('.gif'));
@@ -121,11 +124,11 @@ function updateUI() {
             img.style.display = 'none';
             programTitle.textContent = 'Chương trình không xác định';
         };
-        programTitle.appendChild(img);
+        programTitle.insertBefore(img, programTitle.firstChild);
     } else {
-        programTitle.textContent = programContent;
+        programTitle.firstChild.textContent = programContent;
         programTitle.style.color = prizes[0].color;
-        if (prizes[0].color) { // Sửa lỗi cú pháp từ prizes0].color thành prizes[0].color
+        if (prizes[0].color) {
             programTitle.style.background = `linear-gradient(135deg, ${prizes[0].color} 0%, ${lightenColor(prizes[0].color, 20)} 100%)`;
             programTitle.style.webkitBackgroundClip = 'text';
             programTitle.style.webkitTextFillColor = 'transparent';
@@ -157,7 +160,7 @@ function updateUI() {
         document.body.style.backgroundRepeat = 'no-repeat';
     } else {
         document.body.style.backgroundImage = 'none';
-        document.body.style.backgroundColor = '#f5f7fa';
+        document.body.style.backgroundColor = 'var(--background)';
     }
 }
 
@@ -373,11 +376,13 @@ function showSpinning() {
     const resultText = document.getElementById('result-text');
     const resultImage = document.getElementById('result-image');
     const shareBtn = document.getElementById('share-btn');
+    const retryBtn = document.getElementById('retry-btn');
     resultText.textContent = 'Đang quay...';
     resultText.style.color = '#333';
     resultText.style.fontWeight = 'normal';
     resultImage.style.display = 'none';
     shareBtn.style.display = 'none';
+    retryBtn.style.display = 'none';
 }
 
 function spinWheel() {
@@ -416,7 +421,7 @@ function spinWheel() {
     const totalQuantity = availablePrizes.reduce((sum, prize) => sum + prize.quantity, 0);
     let randomWeight = Math.random() * totalQuantity;
     let winnerIndex = 0;
-    for (let i = 0; i < availablePrizes.length; i++) {
+    for (let i0; i < availablePrizes.length; i++) {
         randomWeight -= availablePrizes[i].quantity;
         if (randomWeight <= 0) {
             winnerIndex = i;
@@ -494,6 +499,7 @@ function showResult(prize) {
     const resultText = document.getElementById('result-text');
     const resultImage = document.getElementById('result-image');
     const shareBtn = document.getElementById('share-btn');
+    const retryBtn = document.getElementById('retry-btn');
     
     let message = prizes[0].requirePlayerInfo.toLowerCase() === 'yes' 
         ? `Chúc mừng ${playerInfo.name}! Bạn trúng: ${prize.name}`
@@ -517,6 +523,7 @@ function showResult(prize) {
     resultText.style.animation = 'pulse 0.5s ease 3';
 
     shareBtn.style.display = 'block';
+    retryBtn.style.display = 'block';
     shareBtn.onclick = () => shareResult(prize);
 
     playWinSound();
@@ -709,6 +716,26 @@ document.addEventListener('DOMContentLoaded', () => {
     createParticles();
     preloadAudio();
     
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+
+    if (localStorage.getItem('theme') === 'dark') {
+        body.setAttribute('data-theme', 'dark');
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+
+    themeToggle.addEventListener('click', () => {
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            localStorage.setItem('theme', 'light');
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+
     document.getElementById('spin-btn').addEventListener('click', spinWheel);
     
     document.getElementById('reset-btn').addEventListener('click', () => {
@@ -716,11 +743,26 @@ document.addEventListener('DOMContentLoaded', () => {
         hasSpun = false;
         stopBlinkEffect();
         initWheel();
-        document.getElementById('result-text').textContent = '';
+        document.getElementById('result-text').textContent = 'Chưa có kết quả';
         document.getElementById('result-image').style.display = 'none';
         document.getElementById('share-btn').style.display = 'none';
+        document.getElementById('retry-btn').style.display = 'none';
         document.getElementById('spin-btn').disabled = false;
         showNotification('Đã reset vòng quay!');
+    });
+
+    document.getElementById('retry-btn').addEventListener('click', () => {
+        if (!isSpinning) {
+            hasSpun = false;
+            stopBlinkEffect();
+            initWheel();
+            document.getElementById('result-text').textContent = 'Chưa có kết quả';
+            document.getElementById('result-image').style.display = 'none';
+            document.getElementById('share-btn').style.display = 'none';
+            document.getElementById('retry-btn').style.display = 'none';
+            document.getElementById('spin-btn').disabled = false;
+            showNotification('Đã sẵn sàng để quay lại!');
+        }
     });
 
     document.getElementById('notification-modal').addEventListener('click', function(e) {
