@@ -6,6 +6,7 @@ let spinAudio;
 let winAudio;
 let playerInfo = null;
 let programName = '';
+let hasSpun = false; // Biến cờ để theo dõi xem đã quay thưởng và có kết quả hay chưa
 
 function preloadAudio() {
     spinAudio = new Audio('sounds/spin.mp3');
@@ -71,8 +72,8 @@ async function fetchData() {
             background: row[6],
             companyLogo: row[7],
             hashtag: row[8],
-            fbPage: row[9], // Cột J: Link trang FB
-            fbPost: row[10] // Cột K: Link bài viết
+            fbPage: row[9],  // Cột J: Link trang fanpage
+            fbPost: row[10]  // Cột K: Link bài viết
         }));
 
         console.log('Dữ liệu từ Google Sheet:', prizes);
@@ -80,6 +81,7 @@ async function fetchData() {
         updateUI();
         initWheel();
         hideLoading();
+        showPlayerInfoModal(); // Modal chỉ được gọi một lần khi trang tải
     } catch (error) {
         console.error('Error fetching data:', error);
         hideLoading();
@@ -359,7 +361,17 @@ function showSpinning() {
 function spinWheel() {
     if (isSpinning) return;
 
-    // Kiểm tra xem người chơi đã quay chưa
+    // Nếu đã quay và có kết quả, không cho phép quay lại và không hiện modal
+    if (hasSpun) {
+        showNotification('Bạn đã quay và có kết quả rồi! Mỗi người chỉ được quay 1 lần.');
+        return;
+    }
+
+    if (!playerInfo || !playerInfo.followedPage || !playerInfo.likedPost) {
+        showNotification('Vui lòng theo dõi trang Facebook và thích bài viết trước khi quay!');
+        return; // Không gọi lại showPlayerInfoModal()
+    }
+
     const playedPlayers = JSON.parse(localStorage.getItem('playedPlayers') || '[]');
     if (playedPlayers.includes(playerInfo.phone)) {
         showNotification('Bạn đã tham gia quay rồi! Mỗi người chỉ được quay 1 lần.');
@@ -378,10 +390,7 @@ function spinWheel() {
         return;
     }
 
-    // Tính tổng số lượng để xác định trọng số
     const totalQuantity = availablePrizes.reduce((sum, prize) => sum + prize.quantity, 0);
-    
-    // Chọn giải thưởng dựa trên trọng số
     let randomWeight = Math.random() * totalQuantity;
     let winnerIndex = 0;
     for (let i = 0; i < availablePrizes.length; i++) {
@@ -427,6 +436,7 @@ function spinWheel() {
             startBlinkEffect(winnerIndex);
             isSpinning = false;
             spinBtn.disabled = false;
+            hasSpun = true; // Đặt cờ hasSpun thành true sau khi có kết quả
         }
     }
     
@@ -462,7 +472,7 @@ function showResult(prize) {
     const resultImage = document.getElementById('result-image');
     const shareBtn = document.getElementById('share-btn');
     
-    let message = `Chúc mừng ${playerInfo.name}! Bạn trúng: ${prize.name}`;
+    let message = `Chúc mừng ${playerInfo.name}! Bạn trúng: ${prize.name}`; // Giữ thông tin người chơi trong kết quả
     resultText.innerHTML = `
         <p style="font-size: 1.4em; font-weight: bold; color: ${prize.color || '#2E7D32'}">${message}</p>
         <p style="font-size: 1.2em; color: ${prize.color || '#2E7D32'}; margin-top: 10px;">${prize.hashtag}</p>
@@ -498,7 +508,7 @@ async function shareResult(prize) {
         const blob = await fetch(imgData).then(res => res.blob());
         const file = new File([blob], 'ket-qua-vong-quay.png', { type: 'image/png' });
 
-        const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${playerInfo.name} đã trúng ${prize.name}!`;
+        const shareText = `${programName} ${prize.hashtag} - Chúc mừng ${playerInfo.name} đã trúng ${prize.name}!`; // Giữ thông tin người chơi trong chia sẻ
         console.log('Nội dung chia sẻ:', shareText);
 
         if (navigator.share) {
@@ -581,9 +591,7 @@ function showLoading() {
 function hideLoading() {
     document.getElementById('loading-spinner').style.display = 'none';
     document.getElementById('wheel').style.opacity = '1';
-    if (playerInfo) {
-        document.getElementById('spin-btn').disabled = false;
-    }
+    document.getElementById('spin-btn').disabled = false;
 }
 
 function showNotification(message) {
@@ -608,12 +616,44 @@ function closeModal() {
 }
 
 function showPlayerInfoModal() {
+    // Không gọi modal nếu đã có kết quả
+    if (hasSpun) {
+        return;
+    }
+
     const modal = document.getElementById('player-info-modal');
     const fbPageLink = document.getElementById('fb-page-link');
     const fbPostLink = document.getElementById('fb-post-link');
+    const followFbCheckbox = document.getElementById('player-follow-fb');
+    const likePostCheckbox = document.getElementById('player-like-post');
+
+    const fbPage = prizes[0]?.fbPage || '#';
+    const fbPost = prizes[0]?.fbPost || '#';
     
-    fbPageLink.href = prizes[0]?.fbPage || '#';
-    fbPostLink.href = prizes[0]?.fbPost || '#';
+    console.log('FB Page Link:', fbPage);
+    console.log('FB Post Link:', fbPost);
+    
+    fbPageLink.href = fbPage;
+    fbPageLink.textContent = fbPage !== '#' ? 'Click để theo dõi' : 'Link trang FB không khả dụng';
+    fbPostLink.href = fbPost;
+    fbPostLink.textContent = fbPost !== '#' ? 'Click để thích' : 'Link bài viết không khả dụng';
+
+    // Đặt lại trạng thái checkbox mỗi lần mở modal
+    followFbCheckbox.checked = false;
+    likePostCheckbox.checked = false;
+
+    // Lưu trạng thái và tích checkbox khi nhấp vào link
+    fbPageLink.addEventListener('click', () => {
+        localStorage.setItem('hasFollowedPage', 'true');
+        followFbCheckbox.checked = true;
+    });
+
+    fbPostLink.addEventListener('click', () => {
+        localStorage.setItem('hasLikedPost', 'true');
+        likePostCheckbox.checked = true;
+    });
+
+    document.getElementById('spin-btn').disabled = true;
     
     modal.style.display = 'flex';
     setTimeout(() => modal.classList.add('show'), 10);
@@ -643,21 +683,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerInfoForm = document.getElementById('player-info-form');
     playerInfoForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        
+        const followFb = document.getElementById('player-follow-fb').checked;
+        const likePost = document.getElementById('player-like-post').checked;
+        
+        if (!followFb || !likePost) {
+            showNotification('Vui lòng tích vào "Theo dõi trang" và "Thích bài viết" trước khi xác nhận!');
+            return;
+        }
+
         playerInfo = {
             name: document.getElementById('player-name').value.trim(),
             address: document.getElementById('player-address').value.trim(),
             phone: document.getElementById('player-phone').value.trim(),
             facebook: document.getElementById('player-facebook').value.trim(),
             zalo: document.getElementById('player-zalo').value.trim(),
-            followedPage: document.getElementById('player-follow-fb').checked,
-            likedPost: document.getElementById('player-like-post').checked
+            followedPage: followFb,
+            likedPost: likePost
         };
         closePlayerInfoModal();
         document.getElementById('spin-btn').disabled = false;
     });
 
-    showPlayerInfoModal();
-    
     fetchData();
 });
 
