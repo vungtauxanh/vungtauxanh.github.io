@@ -668,18 +668,16 @@ function showPlayerInfoModal() {
     fbPostLink.href = fbPost;
     fbPostLink.textContent = fbPost !== '#' ? 'Click để thích' : 'Link bài viết không khả dụng';
 
+    // Đặt lại các checkbox
     followFbCheckbox.checked = false;
     likePostCheckbox.checked = false;
 
-    fbPageLink.addEventListener('click', () => {
-        localStorage.setItem('hasFollowedPage', 'true');
-        followFbCheckbox.checked = true;
-    });
-
-    fbPostLink.addEventListener('click', () => {
-        localStorage.setItem('hasLikedPost', 'true');
-        likePostCheckbox.checked = true;
-    });
+    // Đặt lại các trường input
+    document.getElementById('player-name').value = '';
+    document.getElementById('player-address').value = '';
+    document.getElementById('player-phone').value = '';
+    document.getElementById('player-facebook').value = '';
+    document.getElementById('player-zalo').value = '';
 
     document.getElementById('spin-btn').disabled = true;
     
@@ -734,18 +732,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Thêm eventListener cho các link Facebook
+    const fbPageLink = document.getElementById('fb-page-link');
+    const fbPostLink = document.getElementById('fb-post-link');
+    const followFbCheckbox = document.getElementById('player-follow-fb');
+    const likePostCheckbox = document.getElementById('player-like-post');
+
+    fbPageLink.addEventListener('click', () => {
+        localStorage.setItem('hasFollowedPage', 'true');
+        followFbCheckbox.checked = true;
+    });
+
+    fbPostLink.addEventListener('click', () => {
+        localStorage.setItem('hasLikedPost', 'true');
+        likePostCheckbox.checked = true;
+    });
+
     document.getElementById('spin-btn').addEventListener('click', spinWheel);
     
     document.getElementById('reset-btn').addEventListener('click', () => {
         if (isSpinning) return;
+
+        // Đặt lại trạng thái
         hasSpun = false;
+        playerInfo = null; // Xóa thông tin người chơi hiện tại
+        localStorage.removeItem('playedPlayers'); // Xóa danh sách người chơi đã tham gia
+        localStorage.removeItem('hasFollowedPage'); // Xóa trạng thái theo dõi trang
+        localStorage.removeItem('hasLikedPost'); // Xóa trạng thái thích bài viết
+
         stopBlinkEffect();
         initWheel();
         document.getElementById('result-text').textContent = 'Chưa có kết quả';
         document.getElementById('result-image').style.display = 'none';
         document.getElementById('share-btn').style.display = 'none';
         document.getElementById('retry-btn').style.display = 'none';
-        document.getElementById('spin-btn').disabled = false;
+        document.getElementById('spin-btn').disabled = true; // Vô hiệu hóa nút quay cho đến khi nhập thông tin
+
+        // Kiểm tra nếu yêu cầu thông tin người chơi
+        if (prizes.length > 0 && prizes[0].requirePlayerInfo.toLowerCase() === 'yes') {
+            showPlayerInfoModal(); // Hiển thị lại form điền thông tin
+        } else {
+            document.getElementById('spin-btn').disabled = false; // Nếu không yêu cầu, cho phép quay ngay
+        }
+
         showNotification('Đã reset vòng quay!');
     });
 
